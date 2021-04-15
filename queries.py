@@ -1,6 +1,6 @@
-def severityToStorm(minutes='60', state='All'):
-    # Accident severity grouped by storm
-    # Display as bar plot
+def severityToStorm(minutes='60',state='All'):
+    #Accident severity grouped by storm
+    #Display as bar plot
     if state != 'All':
         return f"""SELECT stormtype, AVG(Severity) as Severity FROM(
         SELECT stormtype, Severity FROM JPalavec.Accident A
@@ -16,10 +16,9 @@ def severityToStorm(minutes='60', state='All'):
     OR (A.enddate > S.begindate AND A.enddate < S.begindate + interval '{minutes}' minute))
     GROUP BY stormtype"""
 
-
-def accidentDurationToStorm(minutes='60', state='All'):
-    # User selects storm duration, accident duration grouped by storm
-    # Display as bar plot
+def accidentDurationToStorm(minutes='60',state='All'):
+ #User selects storm duration, accident duration grouped by storm
+ #Display as bar plot
     if state != 'All':
         return f"""SELECT stormtype, AVG(24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE)) as Duration FROM(
                 SELECT stormtype, A.startdate, A.enddate FROM JPalavec.Accident A
@@ -35,9 +34,8 @@ def accidentDurationToStorm(minutes='60', state='All'):
                 OR (A.enddate > S.begindate AND A.enddate < S.begindate + interval '{minutes}' minute))
                 GROUP BY stormtype"""
 
-
 def stormAccidentDurationVsAverage(minutes='60', stormtype='All'):
-    # returns 2 values, one is accidents during stormtype, other is average accidents. Can do barplot (or other option if you think of something better)
+    #returns 2 values, one is accidents during stormtype, other is average accidents. Can do barplot (or other option if you think of something better)
     if stormtype != 'All':
         return f"""SELECT SDuration, Duration
                 FROM
@@ -59,8 +57,8 @@ def stormAccidentDurationVsAverage(minutes='60', stormtype='All'):
         FROM JPalavec.Accident)"""
 
 
-def hourMonthHeatmap(state='All', county='All'):
-    # Heatmap, user can optionall select County and State with default value of All
+def hourMonthHeatmap(state='All',county='All'):
+    #Heatmap, user can optionall select County and State with default value of All
     if state != 'All':
         if county != 'All':
             return f"""SELECT Count(*), Hour, Month
@@ -87,7 +85,6 @@ def hourMonthHeatmap(state='All', county='All'):
                 )
                 GROUP BY Hour, Month"""
 
-
 def hourAverageDensityHeatmap(state):
     if state != 'All':
         f"""SELECT Count(*) as Counts, Hour, AverageDensity
@@ -98,11 +95,11 @@ def hourAverageDensityHeatmap(state):
         FROM
         (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE(10) OVER (ORDER BY Pop2018 / landArea) AS PopTile
         FROM  JPalavec.County C
-        WHERE county != 'Unassigned' AND state = '{state}'
+        WHERE county != 'All' AND state = '{state}'
         )GROUP BY PopTile) C1,
         (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE(10) OVER (ORDER BY Pop2018 / landArea) AS PopTile
         FROM  JPalavec.County C
-        WHERE county != 'Unassigned' AND state = '{state}') C2,
+        WHERE county != 'All' AND state = '{state}') C2,
         JPalavec.Accident A
         WHERE C1.poptile = C2.Poptile AND A.county = C2.county AND A.state = C2.state)
         GROUP BY Hour, AverageDensity"""
@@ -114,15 +111,14 @@ def hourAverageDensityHeatmap(state):
             FROM
             (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE(10) OVER (ORDER BY Pop2018 / landArea) AS PopTile
             FROM  JPalavec.County C
-            WHERE county != 'Unassigned'
+            WHERE county != 'All'
             )GROUP BY PopTile) C1,
             (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE(10) OVER (ORDER BY Pop2018 / landArea) AS PopTile
             FROM  JPalavec.County C
-            WHERE county != 'Unassigned') C2,
+            WHERE county != 'All') C2,
             JPalavec.Accident A
             WHERE C1.poptile = C2.Poptile AND A.county = C2.county AND A.state = C2.state)
             GROUP BY Hour, AverageDensity"""
-
 
 def accidentDurationHourHeatmap(state='All'):
     if (state != 'All'):
@@ -162,20 +158,29 @@ def accidentDurationHourHeatmap(state='All'):
             GROUP BY Hour, AverageDuration
             ORDER BY Counts desc"""
 
-
-def accidentsPopDensityGraph():
-    # Returns accidentCount, and PopDensity, could add County,state as labels. Graph as scatterplot
+def accidentsPopDensityGraph(state='All'):
+    #Returns accidentCount, and PopDensity, could add County,state as labels. Graph as scatterplot
+    if state != 'All':
+        return f"""SELECT AccidentCount, C.state, C.county, C.Pop2018 / C.LandArea as PopDensity
+            FROM(
+            SELECT Count(*) as AccidentCount, C.county, C.state
+            FROM JPalavec.Accident A
+            JOIN JPalavec.County C ON A.county = C.county AND A.state = c.state
+            WHERE C.county != 'All'
+            GROUP BY C.county, C.state) AC,
+            JPalavec.County C
+            WHERE C.state = AC.state AND C.county = AC.county AND C.county != 'All' AND AC.state = '{state}'
+            ORDER BY AccidentCount desc"""
     return f"""SELECT AccidentCount, C.state, C.county, C.Pop2018 / C.LandArea as PopDensity
             FROM(
             SELECT Count(*) as AccidentCount, C.county, C.state
             FROM JPalavec.Accident A
             JOIN JPalavec.County C ON A.county = C.county AND A.state = c.state
-            Where C.county != 'Unassigned'
+            WHERE C.county != 'All'
             GROUP BY C.county, C.state) AC,
             JPalavec.County C
-            WHERE C.state = AC.state AND C.county = AC.county AND C.county != 'Unassigned'
+            WHERE C.state = AC.state AND C.county = AC.county AND C.county != 'All'
             ORDER BY AccidentCount desc"""
-
 
 def worstCountiesToLive(accidentPercentile='80'):
     return f"""SELECT fips, X.Damage, X.County, X.State
