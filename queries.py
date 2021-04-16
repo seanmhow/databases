@@ -160,6 +160,7 @@ def accidentDurationHourHeatmap(state='All'):
 
 def accidentsPopDensityGraph(state='All'):
     #Returns accidentCount, and PopDensity, could add County,state as labels. Graph as scatterplot
+    print(state)
     if state != 'All':
         return f"""SELECT AccidentCount, C.state, C.county, C.Pop2018 / C.LandArea as PopDensity
             FROM(
@@ -199,3 +200,17 @@ def worstCountiesToLive(accidentPercentile='80'):
             ORDER BY Damage desc) X
             JOIN JPalavec.county C ON X.county = C.county AND X.state = C.state
             ORDER BY X.Damage desc"""
+
+
+def accidentsFips():
+    return """
+            SELECT c2.fips,count, count/(POP2018) as CountPC, c2.County, c2.STName, AvTemp
+            FROM
+            (
+            SELECT fips, count(*) as count, AVG(Temperature) as AvTemp
+            FROM JPALAVEC.accident a, JPALAVEC.county c
+            WHERE a.county = c.county AND a.state = c.state 
+            GROUP BY c.fips) c1,
+            JPalavec.county c2
+            WHERE c1.fips = c2.fips
+        """
