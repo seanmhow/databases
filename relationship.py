@@ -17,7 +17,7 @@ def mToHm(minutes):
 
 
 def app(cnct):
-    st.title('Relationship')
+    st.title('Climate Impact on Accidents')
 
     # Select Slider for severity to storm query
     mins = st.select_slider(label="Time Duration", options=list(np.arange(1, 2880)), format_func=mToHm)
