@@ -61,7 +61,7 @@ def app():
     fig = px.choropleth_mapbox(df_accidents, geojson=counties, locations='FIPS', color='COUNT',
                            color_continuous_scale="Cividis",
                            mapbox_style="carto-positron",
-                           range_color=(0,20000),
+                           range_color=(0,40000),
                            zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
                            opacity=0.5,
                            hover_name="COUNTY",

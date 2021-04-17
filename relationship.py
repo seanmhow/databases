@@ -16,28 +16,28 @@ def callSql(query):
 
 
 # Minutes to HH:MM format for the select_slider
-def mToHm(minutes):
-    minutes = int(minutes)
-    hours = str(int(minutes / 60))
+def hToDh(hours):
+    hours = int(hours)
+    days = str(int(hours / 24))
+    days = days if len(days) > 1 else ("0" + days)
+    hours = str(int(hours % 24))
     hours = hours if len(hours) > 1 else ("0" + hours)
-    minutes = str(int(minutes % 60))
-    minutes = minutes if len(minutes) > 1 else ("0" + minutes)
-    return f"{hours}:{minutes}"
+    return f"{days}:{hours} "
 
 
 def app():
     st.title('Climate Impact on Accidents')
 
     # Select Slider for severity to storm query
-    mins = st.select_slider(label="Time Duration", options=list(np.arange(1, 2880)), format_func=mToHm, key=0)
+    hours = st.select_slider(label="Storm Duration in Hours", options=list(np.arange(1, 49)), format_func=hToDh, key=0)
 
-    durToStorm = q.accidentDurationToStorm(minutes=mins)
+    durToStorm = q.accidentDurationToStorm(minutes=hours*60)
     durToStorm_df = callSql(durToStorm).copy()
     durToStormA = alt.Chart(durToStorm_df).mark_bar().encode(x='STORMTYPE',y='DURATION').properties(width=600).interactive()
     st.altair_chart(durToStormA)
 
     
-    stormVsNorm = q.stormAccidentDurationVsAverage(minutes=mins)
+    stormVsNorm = q.stormAccidentDurationVsAverage(minutes=hours * 60)
     stormVsNorm_df = callSql(stormVsNorm).copy()
     sDf = pd.DataFrame({
         'Categories' : ["Storm", "All Accidents"],
@@ -48,7 +48,7 @@ def app():
 
 
 
-    expAcc = q.stormAccidentsVsExpectedAccidents(minutes = mins)
+    expAcc = q.stormAccidentsVsExpectedAccidents(minutes = hours * 60)
     expAcc_df = callSql(expAcc).copy()
     eDF = pd.DataFrame({
         'Categories' : ["During Storm", "Expected"],
