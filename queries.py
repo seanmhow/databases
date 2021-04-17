@@ -256,3 +256,25 @@ def hourWeekdayAccident():
         GROUP BY Hour, Day, indexDay
         ORDER BY indexDay asc
     """
+
+def stormAccidentsVsExpectedAccidents(minutes = 60):
+    return f"""
+    SELECT SUM(ADS) as AccidentsDuringStorms, Sum(ExpectedAccidents) as ExpectedAccidents
+    FROM(
+    SELECT ADS, ACOUNT *( SCOUNT * {minutes}) / (26280 * 60) as ExpectedAccidents
+    FROM
+    (SELECT COUNT(*) as acount, County, State
+    FROM Jpalavec.accident
+    GROUP BY County, State) AC,
+    (SELECT Count(*) as scount, County, State
+    FROM JPalavec.storm
+    GROUP BY County, State) SC,
+    (SELECT Count(*) as ADS, A.County, A.State 
+    FROM JPalavec.accident A
+    JOIN JPalavec.Storm S ON A.county = s.county AND a.state = s.state
+    WHERE (A.startdate > S.begindate AND A.startdate < S.begindate + interval '{minutes}' minute)
+    OR (A.enddate > S.begindate AND A.enddate < S.begindate + interval '{minutes}' minute)
+    GROUP BY A.county, A.state
+    ) ADS
+    WHERE ADS.county = SC.county AND ADS.state = SC.state AND ADS.state = AC.state AND ADS.county = AC.county)
+    """
