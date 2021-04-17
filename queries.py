@@ -65,16 +65,16 @@ def hourMonthHeatmap(state='All',county='All'):
                 FROM
                 (
                 SELECT EXTRACT(HOUR FROM StartDate) as Hour,EXTRACT(MONTH FROM StartDate) as Month
-                WHERE state = '{state}' AND county='{county}'
                 FROM JPalavec.Accident
+                WHERE state = '{state}' AND county='{county}'
                 )
                 GROUP BY Hour, Month"""
         return f"""SELECT Count(*) as Counts, Hour, Month
                 FROM
                 (
                 SELECT EXTRACT(HOUR FROM StartDate) as Hour,EXTRACT(MONTH FROM StartDate) as Month
-                WHERE state = '{state}'
                 FROM JPalavec.Accident
+                WHERE state = '{state}'
                 )
                 GROUP BY Hour, Month"""
     return f"""SELECT Count(*) as Counts, Hour, Month

@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import selection
+import selection as s
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,13 +20,15 @@ def app():
     st.title('Accident Analysis')
     #st.subtitle('What are the largest factors in causing')
 
+    #State selector
+    state = s.selectStates(key= 2)
     # Queries
     durStFips = q.accidentDurationState()
     sevStFips = q.accidentSeverityState()
     hourDay = q.hourWeekdayAccident()
-    byMonth = q.hourMonthHeatmap()
-    popDenHr = q.hourAverageDensityHeatmap()
-    durHr = q.accidentDurationHourHeatmap()
+    byMonth = q.hourMonthHeatmap(state)
+    popDenHr = q.hourAverageDensityHeatmap(state)
+    durHr = q.accidentDurationHourHeatmap(state)
 
     # create a text element and let the reader know that the data is loading
     data_load_state = st.text('loading accident data...')

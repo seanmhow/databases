@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import selection
+import selection as s
 import seaborn as sns
 import datetime as dt
 import numpy as np
@@ -41,11 +41,12 @@ def app():
     # notify the reader that the data was successfully loaded
     data_load_state_storm.text("")
     # select states
-    states = """select distinct state from JPalavec.County WHERE state != 'AK' ORDER BY state asc"""
-    df_states = callSql(states).copy()
-    states_list = df_states['STATE'].to_list()
-    states_list.insert(0,'All')
-    state = st.selectbox('State', options=states_list)
+    # states = """select distinct state from JPalavec.County WHERE state != 'AK' ORDER BY state asc"""
+    # df_states = callSql(states).copy()
+    # states_list = df_states['STATE'].to_list()
+    # states_list.insert(0,'All')
+    # state = st.selectbox('State', options=states_list)
+    state = s.selectStates(key= 1)
     popDensityQuery = queries.accidentsPopDensityGraph(state=state)
     df_popDensity = pd.read_sql(popDensityQuery, cnct)
     a = alt.Chart(df_popDensity).mark_circle(size=60).encode(x='POPDENSITY',y='ACCIDENTCOUNT',tooltip=['COUNTY','STATE','POPDENSITY','ACCIDENTCOUNT'], opacity=alt.value(0.2), color=alt.value('purple')).interactive().properties(width=600, title="Population Density To Accidents Scatter Plot")
