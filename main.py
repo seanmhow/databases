@@ -19,9 +19,9 @@ st.set_page_config(page_title='Databases')
 cnct = connect.db()
 
 PAGES = {
-    "Natural Disasters": naturalDisaster,
-    "Car Accidents": accident,
-    "Relationship": relationship
+    "Overview": naturalDisaster,
+    "Accident Analysis": accident,
+    "Storms and Accidents": relationship
 }
 
 st.sidebar.title('Navigation')

@@ -4,7 +4,7 @@ import selection
 import numpy as np
 import matplotlib.pyplot as plt
 import queries as q
-
+import altair as alt
 
 # Minutes to HH:MM format for the select_slider
 def mToHm(minutes):
@@ -20,11 +20,20 @@ def app(cnct):
     st.title('Climate Impact on Accidents')
 
     # Select Slider for severity to storm query
-    mins = st.select_slider(label="Time Duration", options=list(np.arange(1, 2880)), format_func=mToHm)
+    mins = st.select_slider(label="Time Duration", options=list(np.arange(1, 2880)), format_func=mToHm, key=0)
 
-    sbs_df = pd.read_sql(q.severityToStorm(mins), cnct)
-    st.write(sbs_df)
+    durToStorm = q.accidentDurationToStorm(minutes=mins)
+    durToStorm_df = pd.read_sql(durToStorm, con=cnct)
+    durToStormA = alt.Chart(durToStorm_df).mark_bar().encode(x='STORMTYPE',y='DURATION').properties(width=600)
+   # st.write(durToStormA)
 
-    # Figure needs to be added here.
-    fig = plt.figure()
-    ax = fig.add_axes([0, 0, 1, 1])
+    
+    mins2 = st.select_slider(label="Time Duration", options=list(np.arange(1, 2880)), format_func=mToHm, key=1)
+    stormVsNorm = q.stormAccidentDurationVsAverage(minutes=mins2)
+    stormVsNorm_df = pd.read_sql(stormVsNorm, con=cnct)
+    sDf = pd.DataFrame({
+        'a' : ["Storm", "All Accidents"],
+        'b' : [stormVsNorm_df['SDURATION'][0], stormVsNorm_df['DURATION'][0]]
+    })
+    stormVsNormA = alt.Chart(sDf).mark_bar().encode(x='a',y='b').properties(width=600)
+    st.write(stormVsNormA)

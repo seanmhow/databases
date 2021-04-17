@@ -39,7 +39,7 @@ def app(cnct):
     state = st.selectbox('State', options=states_list)
     popDensityQuery = queries.accidentsPopDensityGraph(state=state)
     df_popDensity = pd.read_sql(popDensityQuery, cnct)
-    a = alt.Chart(df_popDensity).mark_circle(size=60).encode(x='POPDENSITY',y='ACCIDENTCOUNT',tooltip=['COUNTY','STATE','POPDENSITY','ACCIDENTCOUNT'], opacity=alt.value(0.2), color=alt.value('purple')).interactive()
+    a = alt.Chart(df_popDensity).mark_circle(size=60).encode(x='POPDENSITY',y='ACCIDENTCOUNT',tooltip=['COUNTY','STATE','POPDENSITY','ACCIDENTCOUNT'], opacity=alt.value(0.2), color=alt.value('purple')).interactive().properties(width=600, title="Population Density To Accidents Scatter Plot")
     st.write(a)
 
     with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
