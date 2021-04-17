@@ -6,9 +6,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import queries as q
 import plotly.express as px
+import connect
+
+@st.cache
+def callSql(query):
+    cnct = connect.db()
+    x = pd.read_sql(query, con=cnct)
+    cnct.close()
+    return x
 
 
-def app(cnct):
+def app():
     st.title('Accident Analysis')
     #st.subtitle('What are the largest factors in causing')
 
@@ -25,12 +33,12 @@ def app(cnct):
     # load data into the dataframe
 
     # dataframes
-    durStFips_df= pd.read_sql(durStFips, con=cnct)
-    sevStFips_df = pd.read_sql(sevStFips, con=cnct)
-    hourDay_df = pd.read_sql(hourDay,con=cnct)
-    pdh_df = pd.read_sql(popDenHr, con=cnct)
-    month_df = pd.read_sql(byMonth, con=cnct)
-    durHr_df = pd.read_sql(durHr, con=cnct)
+    durStFips_df= callSql(durStFips).copy()
+    sevStFips_df = callSql(sevStFips).copy()
+    hourDay_df = callSql(hourDay).copy()
+    pdh_df = callSql(popDenHr).copy()
+    month_df = callSql(byMonth).copy()
+    durHr_df = callSql(durHr).copy()
 
     #State accident duration map
     st.header("Average Accident Duration by State")

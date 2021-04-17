@@ -16,8 +16,8 @@ import datetime
 st.set_page_config(page_title='Databases')
 
 # connect to the DB
-cnct = connect.db()
-
+x = datetime.datetime.now()
+print(datetime.datetime.now() - x)
 PAGES = {
     "Overview": naturalDisaster,
     "Accident Analysis": accident,
@@ -27,4 +27,4 @@ PAGES = {
 st.sidebar.title('Navigation')
 selection = st.sidebar.radio("Go to", list(PAGES.keys()))
 page = PAGES[selection]
-page.app(cnct)
+page.app()

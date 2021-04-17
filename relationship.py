@@ -5,6 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import queries as q
 import altair as alt
+import connect
+
+@st.cache
+def callSql(query):
+    cnct = connect.db()
+    x= pd.read_sql(query, con=cnct)
+    cnct.close()
+    return x
+
 
 # Minutes to HH:MM format for the select_slider
 def mToHm(minutes):
@@ -16,24 +25,35 @@ def mToHm(minutes):
     return f"{hours}:{minutes}"
 
 
-def app(cnct):
+def app():
     st.title('Climate Impact on Accidents')
 
     # Select Slider for severity to storm query
     mins = st.select_slider(label="Time Duration", options=list(np.arange(1, 2880)), format_func=mToHm, key=0)
 
     durToStorm = q.accidentDurationToStorm(minutes=mins)
-    durToStorm_df = pd.read_sql(durToStorm, con=cnct)
-    durToStormA = alt.Chart(durToStorm_df).mark_bar().encode(x='STORMTYPE',y='DURATION').properties(width=600)
-   # st.write(durToStormA)
+    durToStorm_df = callSql(durToStorm).copy()
+    durToStormA = alt.Chart(durToStorm_df).mark_bar().encode(x='STORMTYPE',y='DURATION').properties(width=600).interactive()
+    st.altair_chart(durToStormA)
 
     
-    mins2 = st.select_slider(label="Time Duration", options=list(np.arange(1, 2880)), format_func=mToHm, key=1)
-    stormVsNorm = q.stormAccidentDurationVsAverage(minutes=mins2)
-    stormVsNorm_df = pd.read_sql(stormVsNorm, con=cnct)
+    stormVsNorm = q.stormAccidentDurationVsAverage(minutes=mins)
+    stormVsNorm_df = callSql(stormVsNorm).copy()
     sDf = pd.DataFrame({
-        'a' : ["Storm", "All Accidents"],
-        'b' : [stormVsNorm_df['SDURATION'][0], stormVsNorm_df['DURATION'][0]]
+        'Categories' : ["Storm", "All Accidents"],
+        'Duration' : [stormVsNorm_df['SDURATION'][0], stormVsNorm_df['DURATION'][0]]
     })
-    stormVsNormA = alt.Chart(sDf).mark_bar().encode(x='a',y='b').properties(width=600)
-    st.write(stormVsNormA)
+    stormVsNormA = alt.Chart(sDf).mark_bar(size=30).encode(x='Categories',y='Duration').properties(width=600).interactive()
+    st.altair_chart(stormVsNormA)
+
+
+
+    expAcc = q.stormAccidentsVsExpectedAccidents(minutes = mins)
+    expAcc_df = callSql(expAcc).copy()
+    eDF = pd.DataFrame({
+        'Categories' : ["During Storm", "Expected"],
+        'Number of Accidents' : [expAcc_df['ACCIDENTSDURINGSTORMS'][0],expAcc_df['EXPECTEDACCIDENTS'][0]]
+    })
+    expAccA = alt.Chart(eDF).mark_bar(size=30).encode(x='Categories',y='Number of Accidents').properties(width=600).interactive()
+    st.altair_chart(expAccA)
+

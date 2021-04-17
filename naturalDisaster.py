@@ -9,10 +9,19 @@ from urllib.request import urlopen
 import json
 import plotly.express as px
 import altair as alt
+import connect
 
-def app(cnct):
+@st.cache
+def callSql(query):
+    cnct = connect.db()
+    x= pd.read_sql(query, con=cnct)
+    cnct.close()
+    return x
 
 
+def app():
+
+    cnct = connect.db()
     st.title('Overview')
     st.text('''
     Welcome to CrashDash, an analytics dashboard containing interesting
@@ -33,7 +42,7 @@ def app(cnct):
     data_load_state_storm.text("")
     # select states
     states = """select distinct state from JPalavec.County WHERE state != 'AK' ORDER BY state asc"""
-    df_states = pd.read_sql(states, cnct)
+    df_states = callSql(states).copy()
     states_list = df_states['STATE'].to_list()
     states_list.insert(0,'All')
     state = st.selectbox('State', options=states_list)
@@ -46,7 +55,7 @@ def app(cnct):
         counties = json.load(response)
 
     accidentsQuery = queries.accidentsFips()
-    df_accidents = pd.read_sql(accidentsQuery, cnct)
+    df_accidents = callSql(accidentsQuery).copy()
     df_accidents['FIPS'] = df_accidents['FIPS'].apply(lambda x : f'0{x}' if len(x) < 5  else x)
     df_accidents['Logarithmic Accidents']=np.log10(df_accidents['COUNT'])
     fig = px.choropleth_mapbox(df_accidents, geojson=counties, locations='FIPS', color='COUNT',
