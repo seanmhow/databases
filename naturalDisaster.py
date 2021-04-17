@@ -48,38 +48,39 @@ def app(cnct):
     accidentsQuery = queries.accidentsFips()
     df_accidents = pd.read_sql(accidentsQuery, cnct)
     df_accidents['FIPS'] = df_accidents['FIPS'].apply(lambda x : f'0{x}' if len(x) < 5  else x)
+    df_accidents['Logarithmic Accidents']=np.log10(df_accidents['COUNT'])
     fig = px.choropleth_mapbox(df_accidents, geojson=counties, locations='FIPS', color='COUNT',
-                           color_continuous_scale="Jet",
-                           range_color=(0,1000),
+                           color_continuous_scale="Cividis",
                            mapbox_style="carto-positron",
+                           range_color=(0,20000),
                            zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
                            opacity=0.5,
                            hover_name="COUNTY",
-                           hover_data={"STNAME"},
-                           labels={'COUNT':'Accident Count', 'COUNTY': 'County', 'STATE': 'State'})
+                           hover_data=["STNAME", "COUNT"],
+                           labels={'COUNT':'Accident Count', 'COUNTY': 'County', 'STNAME': 'State'})
 
 
     st.write(fig)
 
     fig2 = px.choropleth_mapbox(df_accidents, geojson=counties, locations='FIPS', color='COUNTPC',
-                           color_continuous_scale="BlueRed",
+                           color_continuous_scale="Hot",
                            mapbox_style="carto-positron",
                            zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
                            opacity=0.5,
                            hover_name="COUNTY",
-                           hover_data={"STNAME"},
-                           labels={'COUNTPC':'Accidents Per Capita', 'COUNTY': 'County', 'STATE': 'State'})
+                           hover_data=["STNAME","COUNT"],
+                           labels={'COUNTPC':'Accidents Per Capita', 'COUNTY': 'County', 'STNAME': 'State'})
 
 
     st.write(fig2)
 
     fig3 = px.choropleth_mapbox(df_accidents, geojson=counties, locations='FIPS', color='AVTEMP',
-                            color_continuous_scale="Picnic",
+                            color_continuous_scale="BlueRed",
                             mapbox_style="carto-positron",
                             zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
                             opacity=0.5,
                             hover_name="COUNTY",
-                            hover_data={"STNAME"},
+                            hover_data=["STNAME", "COUNT"],
                             labels={'COUNT':'Accident Count','AVTEMP': 'Average Temperature of Accidents', 'COUNTY': 'County', 'STATE': 'State'})
 
     st.write(fig3)

@@ -61,7 +61,7 @@ def hourMonthHeatmap(state='All',county='All'):
     #Heatmap, user can optionall select County and State with default value of All
     if state != 'All':
         if county != 'All':
-            return f"""SELECT Count(*), Hour, Month
+            return f"""SELECT Count(*) as Counts, Hour, Month
                 FROM
                 (
                 SELECT EXTRACT(HOUR FROM StartDate) as Hour,EXTRACT(MONTH FROM StartDate) as Month
@@ -69,7 +69,7 @@ def hourMonthHeatmap(state='All',county='All'):
                 FROM JPalavec.Accident
                 )
                 GROUP BY Hour, Month"""
-        return f"""SELECT Count(*), Hour, Month
+        return f"""SELECT Count(*) as Counts, Hour, Month
                 FROM
                 (
                 SELECT EXTRACT(HOUR FROM StartDate) as Hour,EXTRACT(MONTH FROM StartDate) as Month
@@ -77,7 +77,7 @@ def hourMonthHeatmap(state='All',county='All'):
                 FROM JPalavec.Accident
                 )
                 GROUP BY Hour, Month"""
-    f"""SELECT Count(*), Hour, Month
+    return f"""SELECT Count(*) as Counts, Hour, Month
                 FROM
                 (
                 SELECT EXTRACT(HOUR FROM StartDate) as Hour,EXTRACT(MONTH FROM StartDate) as Month
@@ -85,7 +85,7 @@ def hourMonthHeatmap(state='All',county='All'):
                 )
                 GROUP BY Hour, Month"""
 
-def hourAverageDensityHeatmap(state):
+def hourAverageDensityHeatmap(state="All"):
     if state != 'All':
         f"""SELECT Count(*) as Counts, Hour, AverageDensity
         FROM
@@ -203,6 +203,7 @@ def worstCountiesToLive(accidentPercentile='80'):
 
 
 def accidentsFips():
+    #Map all accidents in US by county
     return """
             SELECT c2.fips,count, count/(POP2018) as CountPC, c2.County, c2.STName, AvTemp
             FROM
@@ -214,3 +215,44 @@ def accidentsFips():
             JPalavec.county c2
             WHERE c1.fips = c2.fips
         """
+
+def accidentDurationState():
+    #Map accident durations by state across US
+    return """
+        SELECT c1.AvDur, c2.STName, c2.state
+        FROM(
+        SELECT AVG(24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE)) as AvDur, a.state
+        FROM JPalavec.accident a
+        JOIN JPalavec.county c
+        ON a.state = c.state
+        GROUP BY a.state
+        )c1, JPalavec.county c2
+        WHERE c1.state = c2.state
+    """
+
+def accidentSeverityState():
+    #Map accident durations by state across US
+    return """
+        SELECT c1.AvSev, c2.STName, c2.state
+        FROM(
+        SELECT AVG(Severity) as AvSev, a.state
+        FROM JPalavec.accident a
+        JOIN JPalavec.county c
+        ON a.state = c.state
+        GROUP BY a.state
+        )c1, JPalavec.county c2
+        WHERE c1.state = c2.state
+    """
+
+
+def hourWeekdayAccident():
+    return """
+        SELECT Count(*) as COUNTS, Hour, Day, indexDay
+        FROM
+        (
+        SELECT EXTRACT(HOUR FROM StartDate) as Hour,TO_CHAR(STARTDATE, 'fmDay') as Day,TO_CHAR(STARTDATE, 'D') indexDay
+        FROM JPalavec.Accident
+        )
+        GROUP BY Hour, Day, indexDay
+        ORDER BY indexDay asc
+    """
