@@ -40,7 +40,7 @@ def app():
     stormVsNorm = q.stormAccidentDurationVsAverage(minutes=hours * 60)
     stormVsNorm_df = callSql(stormVsNorm).copy()
     sDf = pd.DataFrame({
-        'Categories' : ["During Storm", "All"],
+        'Categories' : ["*During Storm", "All"],
         'Average Accident Duration' : [stormVsNorm_df['SDURATION'][0], stormVsNorm_df['DURATION'][0]]
     })
     stormVsNormA = alt.Chart(sDf).mark_bar().encode(y='Categories',x='Average Accident Duration',color='Categories').properties(width = 600, title="Average Duration of Accidents During Storms").interactive()
@@ -51,7 +51,7 @@ def app():
     expAcc = q.stormAccidentsVsExpectedAccidents(minutes = hours * 60)
     expAcc_df = callSql(expAcc).copy()
     eDF = pd.DataFrame({
-        'Categories' : ["During Storm", "Expected"],
+        'Categories' : ["*During Storm", "Expected"],
         'Number of Accidents' : [expAcc_df['ACCIDENTSDURINGSTORMS'][0],expAcc_df['EXPECTEDACCIDENTS'][0]]
     })
     expAccA = alt.Chart(eDF).mark_bar().encode(y='Categories',x='Number of Accidents', color='Categories').properties(width = 600, title="Number of Accidents During Storms vs Expected Accidents in Same Counties").interactive()
