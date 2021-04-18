@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import queries as q
 import altair as alt
 import connect
+import selection as s
+import plotly.express as px
 
 @st.cache
 def callSql(query):
@@ -57,3 +59,16 @@ def app():
     expAccA = alt.Chart(eDF).mark_bar().encode(y='Categories',x='Number of Accidents', color='Categories').properties(width = 600, title="Number of Accidents During Storms vs Expected Accidents in Same Counties").interactive()
     st.altair_chart(expAccA)
 
+    percentile = st.select_slider(label="Percentile Accident Count By County", options=list(np.arange(0, 100)), key=10)
+    wc = q.worstCountiesToLive(accidentPercentile=percentile)
+    wc_df = callSql(wc).copy()
+    counties = s.getLocationData()
+    fig = px.choropleth_mapbox(wc_df, geojson=counties, locations='FIPS', color='DAMAGE', title="Most Expensive Counties",
+                        color_continuous_scale="Burg",
+                        mapbox_style="carto-positron",
+                        zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
+                        opacity=0.5,
+                        hover_name="COUNTY",
+                        hover_data=["STATE", "DAMAGE"],
+                        labels={'COUNT':'Accident Count', 'COUNTY': 'County', "STATE" : "State"})
+    st.write(fig)

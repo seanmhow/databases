@@ -120,8 +120,27 @@ def hourAverageDensityHeatmap(state="All"):
             WHERE C1.poptile = C2.Poptile AND A.county = C2.county AND A.state = C2.state)
             GROUP BY Hour, AverageDensity"""
 
-def accidentDurationHourHeatmap(state='All'):
+def accidentDurationHourHeatmap(state='All',county="All"):
     if (state != 'All'):
+        if (county != 'All'):
+            return f"""WITH Durations AS (SELECT AID,StartDate,24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE) as Duration
+            FROM JPalavec.Accident
+            WHERE state = '{state}' AND county= '{county}')
+            SELECT Count(*) as Counts, Hour, AverageDuration /*Format in correct form for Python heatmap*/
+            FROM
+            (SELECT EXTRACT(HOUR FROM StartDate) as Hour, AverageDuration 
+            FROM
+            (SELECT AVG(Duration) as AverageDuration, DurPercentile   /*Gets average duration of each DurPercentile*/
+            FROM
+            (SELECT Duration, NTILE(10) OVER (ORDER BY Duration) AS DurPercentile 
+            FROM Durations
+            )GROUP BY DurPercentile) A1,
+            (SELECT AID,StartDate,Duration, NTILE(10) OVER (ORDER BY Duration) AS DurPercentile /*Gets all information and combines it with DurPercentile*/
+            FROM  Durations
+            ) A2
+            WHERE A1.DurPercentile = A2.DurPercentile)
+            GROUP BY Hour, AverageDuration
+            ORDER BY Counts desc"""
         return f"""WITH Durations AS (SELECT AID,StartDate,24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE) as Duration
             FROM JPalavec.Accident
             WHERE state = '{state}')
@@ -184,7 +203,7 @@ def accidentsPopDensityGraph(state='All'):
             ORDER BY AccidentCount desc"""
 
 def worstCountiesToLive(accidentPercentile='80'):
-    return f"""SELECT fips, X.Damage, X.County, X.State
+    return f"""SELECT fips, NVL(X.Damage,0) as DAMAGE, X.County, X.State
             FROM(
             SELECT A.County, A.State, Sum(DamageProperty+DamageCrops) as Damage FROM
             (
@@ -194,7 +213,7 @@ def worstCountiesToLive(accidentPercentile='80'):
             FROM JPalavec.Accident
             GROUP BY County, State)
             ) A
-            JOIN JPalavec.Storm S ON S.county = A.county and S.state = A.state
+            LEFT JOIN JPalavec.Storm S ON S.county = A.county and S.state = A.state
             WHERE Percentile > '{accidentPercentile}'
             GROUP BY A.County, A.State
             ORDER BY Damage desc) X
