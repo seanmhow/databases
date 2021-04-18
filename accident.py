@@ -72,12 +72,11 @@ def app():
        state = s.selectStates(key= 2)
        county = s.selectCounty(key=3,state=state)
        byMonth = q.hourMonthHeatmap(state,county=county)
-       popDenHr = q.hourAverageDensityHeatmap(state)
-       durHr = q.accidentDurationHourHeatmap(state,county=county)
+       
        hourDay_df = callSql(hourDay).copy()
-       pdh_df = callSql(popDenHr).copy()
+       
        month_df = callSql(byMonth).copy()
-       durHr_df = callSql(durHr).copy()
+
 
 
 
@@ -117,12 +116,26 @@ def app():
               at morning rush hour.
        ''')
 
+
+       percentile = st.select_slider(label="Number of Percentile Groups", options=list(np.arange(0, 21)),value=10, key=20)
+       popDenHr = q.hourAverageDensityHeatmap(state, percentile=percentile)
+       durHr = q.accidentDurationHourHeatmap(state,county=county,percentile = percentile)
+       durHr_df = callSql(durHr).copy()
+       pdh_df = callSql(popDenHr).copy()
+       #print(len(durHr_df['AVERAGEDURATION'].unique()))
        #Hour and Duration
        fig4 = plt.figure()
-       durHr_df.rename(columns={'HOUR': 'Hour', 'AVERAGEDURATION': 'Average Duration of 10th Percentiles'}, inplace=True)
-       durHr_df = pd.pivot_table(durHr_df, index=['Hour'], columns=['Average Duration of 10th Percentiles'], values='COUNTS')
-       print(durHr_df.columns)
-       sns.heatmap(durHr_df,xticklabels=durHr_df.columns.values.round(1), cmap = 'YlGnBu')
+       durHrTitles = np.sort(durHr_df.loc[:,['DURPERCENTILE','AVERAGEDURATION']].drop_duplicates().values[:,1].round(1))
+       xticklabels = []
+       for i in durHrTitles:
+              if i%1 == 0:
+                     xticklabels.append(int(i))
+              else:
+                     xticklabels.append(np.format_float_positional(i))
+       print(durHrTitles)
+       durHr_df.rename(columns={'HOUR': 'Hour', 'DURPERCENTILE': f'Average Duration of {int(100/percentile)}th Percentiles'}, inplace=True)
+       durHr_df = pd.pivot_table(durHr_df, index=['Hour'], columns=[f'Average Duration of {int(100/percentile)}th Percentiles'], values='COUNTS')
+       sns.heatmap(durHr_df,xticklabels=xticklabels, cmap = 'YlGnBu')
        plt.title("Number of Accidents by Hour and Duration")
        st.pyplot(fig4)
 
@@ -130,15 +143,15 @@ def app():
        # Population Density by Hour
 
        st.text('''
-              This graph is a bit tricky, each section on the x-axis contains 10% \of counties
-              grouped by population density. The average popualtion density of that group is the
-              x-tick on the bottom. It appears the top 10% most dense counties account for nearly
-              every accident!
+              This graph is a bit tricky, each section on the x-axis contains X% \of counties
+              (defined by the slider) grouped by population density. The average popualtion
+              density of that group is the x-tick on the bottom. It appears the top X% most
+              dense counties account for nearly every accident!
        ''')
 
        # pivot the data
-       pdh_df.rename(columns={'HOUR': 'Hour','AVERAGEDENSITY' : 'Average Density of 10th Percentile Counties'}, inplace=True)
-       pdh_df = pd.pivot_table(pdh_df, index=['Hour'], columns=['Average Density of 10th Percentile Counties'], values='COUNTS')
+       pdh_df.rename(columns={'HOUR': 'Hour','AVERAGEDENSITY' : f'Average Density of {int(100/percentile)}th Percentile Counties'}, inplace=True)
+       pdh_df = pd.pivot_table(pdh_df, index=['Hour'], columns=[f'Average Density of {int(100/percentile)}th Percentile Counties'], values='COUNTS')
 
        # heatmaps
        fig3 = plt.figure()

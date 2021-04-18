@@ -85,7 +85,7 @@ def hourMonthHeatmap(state='All',county='All'):
                 )
                 GROUP BY Hour, Month"""
 
-def hourAverageDensityHeatmap(state="All"):
+def hourAverageDensityHeatmap(state="All",percentile=10):
     if state != 'All':
         f"""SELECT Count(*) as Counts, Hour, AverageDensity
         FROM
@@ -93,11 +93,11 @@ def hourAverageDensityHeatmap(state="All"):
         FROM
         (SELECT AVG(PopDensity) as AverageDensity, Poptile
         FROM
-        (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE(10) OVER (ORDER BY Pop2018 / landArea) AS PopTile
+        (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE({percentile}) OVER (ORDER BY Pop2018 / landArea) AS PopTile
         FROM  JPalavec.County C
         WHERE county != 'All' AND state = '{state}'
         )GROUP BY PopTile) C1,
-        (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE(10) OVER (ORDER BY Pop2018 / landArea) AS PopTile
+        (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE({percentile}) OVER (ORDER BY Pop2018 / landArea) AS PopTile
         FROM  JPalavec.County C
         WHERE county != 'All' AND state = '{state}') C2,
         JPalavec.Accident A
@@ -107,75 +107,76 @@ def hourAverageDensityHeatmap(state="All"):
             FROM
             (SELECT EXTRACT(HOUR FROM StartDate) as Hour, AverageDensity
             FROM
-            (SELECT AVG(PopDensity) as AverageDensity, Poptile
+            (SELECT AVG(PopDensity) as AverageDensity, Poptile        /*C1 contains average population densities for each percentile */
             FROM
-            (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE(10) OVER (ORDER BY Pop2018 / landArea) AS PopTile
+            (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE({percentile}) OVER (ORDER BY Pop2018 / landArea) AS PopTile         
             FROM  JPalavec.County C
             WHERE county != 'All'
             )GROUP BY PopTile) C1,
-            (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE(10) OVER (ORDER BY Pop2018 / landArea) AS PopTile
+            (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE({percentile}) OVER (ORDER BY Pop2018 / landArea) AS PopTile     /*C2 contains all other necessary info with percentile */
             FROM  JPalavec.County C
             WHERE county != 'All') C2,
             JPalavec.Accident A
             WHERE C1.poptile = C2.Poptile AND A.county = C2.county AND A.state = C2.state)
             GROUP BY Hour, AverageDensity"""
 
-def accidentDurationHourHeatmap(state='All',county="All"):
+def accidentDurationHourHeatmap(state='All',county="All", percentile = 10):
     if (state != 'All'):
         if (county != 'All'):
             return f"""WITH Durations AS (SELECT AID,StartDate,24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE) as Duration
             FROM JPalavec.Accident
-            WHERE state = '{state}' AND county= '{county}')
-            SELECT Count(*) as Counts, Hour, AverageDuration /*Format in correct form for Python heatmap*/
+            WHERE state = '{state}' AND county= '{county}'
+            )
+            SELECT Counts, Hour, AverageDuration, A2.DurPercentile
             FROM
-            (SELECT EXTRACT(HOUR FROM StartDate) as Hour, AverageDuration 
+            (SELECT Count(*) as Counts, Hour, DurPercentile /*Format in correct form for Python heatmap*/
             FROM
-            (SELECT AVG(Duration) as AverageDuration, DurPercentile   /*Gets average duration of each DurPercentile*/
+            (SELECT EXTRACT(HOUR FROM StartDate) as Hour, A2.DurPercentile 
             FROM
-            (SELECT Duration, NTILE(10) OVER (ORDER BY Duration) AS DurPercentile 
-            FROM Durations
-            )GROUP BY DurPercentile) A1,
-            (SELECT AID,StartDate,Duration, NTILE(10) OVER (ORDER BY Duration) AS DurPercentile /*Gets all information and combines it with DurPercentile*/
+            (SELECT AID,StartDate,Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile /*Gets all information and combines it with DurPercentile*/
             FROM  Durations
-            ) A2
-            WHERE A1.DurPercentile = A2.DurPercentile)
-            GROUP BY Hour, AverageDuration
-            ORDER BY Counts desc"""
+            ) A2)
+            GROUP BY Hour, DurPercentile) A1
+            JOIN (SELECT AVG(Duration) as AverageDuration, DurPercentile   /*Gets average duration of each DurPercentile*/
+            FROM
+            (SELECT Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile 
+            FROM Durations
+            )GROUP BY DurPercentile) A2 ON A1.DurPercentile = A2.DurPercentile"""
         return f"""WITH Durations AS (SELECT AID,StartDate,24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE) as Duration
             FROM JPalavec.Accident
-            WHERE state = '{state}')
-            SELECT Count(*) as Counts, Hour, AverageDuration /*Format in correct form for Python heatmap*/
+            WHERE state='{state}')
+            SELECT Counts, Hour, AverageDuration, A2.DurPercentile
             FROM
-            (SELECT EXTRACT(HOUR FROM StartDate) as Hour, AverageDuration 
+            (SELECT Count(*) as Counts, Hour, DurPercentile /*Format in correct form for Python heatmap*/
             FROM
-            (SELECT AVG(Duration) as AverageDuration, DurPercentile   /*Gets average duration of each DurPercentile*/
+            (SELECT EXTRACT(HOUR FROM StartDate) as Hour, A2.DurPercentile 
             FROM
-            (SELECT Duration, NTILE(10) OVER (ORDER BY Duration) AS DurPercentile 
-            FROM Durations
-            )GROUP BY DurPercentile) A1,
-            (SELECT AID,StartDate,Duration, NTILE(10) OVER (ORDER BY Duration) AS DurPercentile /*Gets all information and combines it with DurPercentile*/
+            (SELECT AID,StartDate,Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile /*Gets all information and combines it with DurPercentile*/
             FROM  Durations
-            ) A2
-            WHERE A1.DurPercentile = A2.DurPercentile)
-            GROUP BY Hour, AverageDuration
-            ORDER BY Counts desc"""
+            ) A2)
+            GROUP BY Hour, DurPercentile) A1
+            JOIN (SELECT AVG(Duration) as AverageDuration, DurPercentile   /*Gets average duration of each DurPercentile*/
+            FROM
+            (SELECT Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile 
+            FROM Durations
+            )GROUP BY DurPercentile) A2 ON A1.DurPercentile = A2.DurPercentile"""
     return f"""WITH Durations AS (SELECT AID,StartDate,24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE) as Duration
             FROM JPalavec.Accident)
-            SELECT Count(*) as Counts, Hour, AverageDuration /*Format in correct form for Python heatmap*/
+            SELECT Counts, Hour, AverageDuration, A2.DurPercentile 
             FROM
-            (SELECT EXTRACT(HOUR FROM StartDate) as Hour, AverageDuration 
+            (SELECT Count(*) as Counts, Hour, DurPercentile /*Format in correct form for Python heatmap*/
             FROM
-            (SELECT AVG(Duration) as AverageDuration, DurPercentile   /*Gets average duration of each DurPercentile*/
+            (SELECT EXTRACT(HOUR FROM StartDate) as Hour, A2.DurPercentile 
             FROM
-            (SELECT Duration, NTILE(10) OVER (ORDER BY Duration) AS DurPercentile 
+            (SELECT AID,StartDate,Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile /*inside query gets all information except average */
+            FROM  Durations                                                                               /*Issue with duplicate averages on multiple rows, must group by percentile */
+            ) A2)
+            GROUP BY Hour, DurPercentile) A1
+            JOIN (SELECT AVG(Duration) as AverageDuration, DurPercentile   /*Gets average duration of each DurPercentile*/
+            FROM
+            (SELECT Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile 
             FROM Durations
-            )GROUP BY DurPercentile) A1,
-            (SELECT AID,StartDate,Duration, NTILE(10) OVER (ORDER BY Duration) AS DurPercentile /*Gets all information and combines it with DurPercentile*/
-            FROM  Durations
-            ) A2
-            WHERE A1.DurPercentile = A2.DurPercentile)
-            GROUP BY Hour, AverageDuration
-            ORDER BY Counts desc"""
+            )GROUP BY DurPercentile) A2 ON A1.DurPercentile = A2.DurPercentile"""
 
 def accidentsPopDensityGraph(state='All'):
     #Returns accidentCount, and PopDensity, could add County,state as labels. Graph as scatterplot
@@ -191,9 +192,9 @@ def accidentsPopDensityGraph(state='All'):
             JPalavec.County C
             WHERE C.state = AC.state AND C.county = AC.county AND C.county != 'All' AND AC.state = '{state}'
             ORDER BY AccidentCount desc"""
-    return f"""SELECT AccidentCount, C.state, C.county, C.Pop2018 / C.LandArea as PopDensity
+    return f"""SELECT AccidentCount, C.state, C.county, C.Pop2018 / C.LandArea as PopDensity         /*Join and get population densities*/
             FROM(
-            SELECT Count(*) as AccidentCount, C.county, C.state
+            SELECT Count(*) as AccidentCount, C.county, C.state             /*Get all accident counts of every county */
             FROM JPalavec.Accident A
             JOIN JPalavec.County C ON A.county = C.county AND A.state = c.state
             WHERE C.county != 'All'
@@ -203,17 +204,17 @@ def accidentsPopDensityGraph(state='All'):
             ORDER BY AccidentCount desc"""
 
 def worstCountiesToLive(accidentPercentile='80'):
-    return f"""SELECT fips, NVL(X.Damage,0) as DAMAGE, X.County, X.State
+    return f"""SELECT fips, NVL(X.Damage,0) as DAMAGE, X.County, X.State /*Replace null values with 0 */
             FROM(
-            SELECT A.County, A.State, Sum(DamageProperty+DamageCrops) as Damage FROM
+            SELECT A.County, A.State, Sum(DamageProperty+DamageCrops) as Damage FROM /*sum up damages */
             (
-            SELECT AccidentCount, County, State, NTILE(100) Over (ORDER BY AccidentCount asc) as Percentile
+            SELECT AccidentCount, County, State, NTILE(100) Over (ORDER BY AccidentCount asc) as Percentile /*Get percentiles for each county*/
             FROM
-            (SELECT COUNT(*) as AccidentCount, County, State
+            (SELECT COUNT(*) as AccidentCount, County, State   /*get accident count for all counties */
             FROM JPalavec.Accident
             GROUP BY County, State)
             ) A
-            LEFT JOIN JPalavec.Storm S ON S.county = A.county and S.state = A.state
+            LEFT JOIN JPalavec.Storm S ON S.county = A.county and S.state = A.state   /* Left join to display counties which have no storm damage */
             WHERE Percentile > '{accidentPercentile}'
             GROUP BY A.County, A.State
             ORDER BY Damage desc) X

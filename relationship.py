@@ -59,7 +59,7 @@ def app():
     expAccA = alt.Chart(eDF).mark_bar().encode(y='Categories',x='Number of Accidents', color='Categories').properties(width = 600, title="Number of Accidents During Storms vs Expected Accidents in Same Counties").interactive()
     st.altair_chart(expAccA)
 
-    percentile = st.select_slider(label="Percentile Accident Count By County", options=list(np.arange(0, 100)), key=10)
+    percentile = st.select_slider(label="Display counties in top X% \of counties by Accident Count", options=list(np.arange(0, 100)), key=10)
     wc = q.worstCountiesToLive(accidentPercentile=percentile)
     wc_df = callSql(wc).copy()
     counties = s.getLocationData()
