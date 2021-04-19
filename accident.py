@@ -37,21 +37,33 @@ def app():
        sevStFips_df = callSql(sevStFips).copy()
 
        #State accident duration map
-       st.header("Average Accident Duration by State")
+       st.header("Average Accident Duration by State (minutes)")
        st.text('''
        Accident duration refers to the time during which an accident impacts traffic flow
        The extremely high duration in some midwestern states is likely a result of certain
        accidents affecting infrastructure which can potentially impact a community for years.
        ''')
+       def strfdelta(tdelta):
+              fmt = "{days} days {hours}:{minutes}:{seconds}"
+              d = {"days": tdelta.days}
+              d["hours"], rem = divmod(tdelta.seconds, 3600)
+              d["minutes"], d["seconds"] = divmod(rem, 60)
+              return fmt.format(**d)
+       durStFips_df['MAXDUR'] = pd.to_timedelta(durStFips_df['MAXDUR'], unit='m')
+       durStFips_df['MAXDUR'] =  durStFips_df['MAXDUR'].apply(strfdelta)
+
+
        fig = px.choropleth(durStFips_df,
-                    locations='STATE',
-                    color='AVDUR',
-                    color_continuous_scale='spectral_r',
-                    hover_name='STNAME',
-                    locationmode='USA-states',
-                    labels={'Current Unemployment Rate':'Unemployment Rate %'},
-                    scope='usa')
-       st.write(fig)
+                     title="Average Accident Impact on Traffic (minutes)",
+                     locations='STATE',
+                     color='AVDUR',
+                     color_continuous_scale='spectral_r',
+                     hover_name='STNAME',
+                     hover_data=['MAXDUR','AVDUR'],
+                     locationmode='USA-states',
+                     labels={'AVDUR':'Average Duration', "MAXDUR":"Max Duration"},
+                     scope='usa')
+       st.plotly_chart(fig)
 
 
        st.header("Average Accident Severity by State")
@@ -67,7 +79,7 @@ def app():
                      locationmode='USA-states',
                      labels={'Current Unemployment Rate':'Unemployment Rate %'},
                      scope='usa')
-       st.write(fig)
+       st.plotly_chart(fig)
 
        state = s.selectStates(key= 2)
        county = s.selectCounty(key=3,state=state)

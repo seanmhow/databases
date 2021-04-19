@@ -239,9 +239,10 @@ def accidentsFips():
 def accidentDurationState():
     #Map accident durations by state across US
     return """
-        SELECT c1.AvDur, c2.STName, c2.state
+        SELECT c1.AvDur, c2.STName, c2.state, c1.MAXDUR
         FROM(
-        SELECT AVG(24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE)) as AvDur, a.state
+        SELECT AVG(24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE)) as AvDur, a.state,
+        MAX(24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE)) as MaxDur
         FROM JPalavec.accident a
         JOIN JPalavec.county c
         ON a.state = c.state

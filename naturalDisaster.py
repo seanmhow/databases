@@ -53,7 +53,7 @@ def app():
     popDensityQuery = queries.accidentsPopDensityGraph(state=state)
     df_popDensity = callSql(popDensityQuery).copy()
     a = alt.Chart(df_popDensity).mark_circle(size=60).encode(x='POPDENSITY',y='ACCIDENTCOUNT',tooltip=['COUNTY','STATE','POPDENSITY','ACCIDENTCOUNT'], opacity=alt.value(0.5), color=alt.value('pink')).interactive().properties(width=600, title="Population Density To Accidents Scatter Plot")
-    st.write(a)
+    st.altair_chart(a)
 
     counties = s.getLocationData()
 
@@ -77,7 +77,7 @@ def app():
                            labels={'COUNT':'Accident Count', 'COUNTY': 'County', 'STNAME': 'State'})
 
 
-    st.write(fig)
+    st.plotly_chart(fig)
     st.text("""
     Here we can see a slightly different map. The color represents accident count per capita.
     It is interesting to note the differences between this map and the previous, as it provides
@@ -92,7 +92,7 @@ def app():
                             labels={'COUNTPC':'Accidents Per Capita', 'COUNTY': 'County', 'STNAME': 'State'})
 
 
-    st.write(fig2)
+    st.plotly_chart(fig2)
     st.text("""
     This is a fun little query which depicts the average temperature of accidents in each county.
     We can see a beautiful gradient as we move North across the US. It is interesting to see many
@@ -108,8 +108,9 @@ def app():
                             hover_data=["STNAME", "COUNT"],
                             labels={'COUNT':'Accident Count','AVTEMP': 'Average Temperature of Accidents', 'COUNTY': 'County', 'STATE': 'State'})
 
-    st.write(fig3)
+    st.plotly_chart(fig3)
 
-    st.text("""Now that we have reviewed overview of some basic accident and weather data across the US,
+    st.text("""
+    Now that we have reviewed overview of some basic accident and weather data across the US,
     we can take a deeper dive into some more complicated queries. Use the left navigation menu to view
     our pages with queries regarding accidents, and accident/storm analysis.""")
