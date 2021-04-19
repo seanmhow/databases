@@ -113,9 +113,9 @@ def hourAverageDensityHeatmap(state="All",percentile=10):
             FROM  JPalavec.County C
             WHERE county != 'All'
             )GROUP BY PopTile) C1,
-            (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE({percentile}) OVER (ORDER BY Pop2018 / landArea) AS PopTile     /*C2 contains all other necessary info with percentile */
+            (SELECT county, state, Pop2018 / LandArea as PopDensity, NTILE({percentile}) OVER (ORDER BY Pop2018 / landArea) AS PopTile     
             FROM  JPalavec.County C
-            WHERE county != 'All') C2,
+            WHERE county != 'All') C2, /*C2 contains county, state, and percentile group */
             JPalavec.Accident A
             WHERE C1.poptile = C2.Poptile AND A.county = C2.county AND A.state = C2.state)
             GROUP BY Hour, AverageDensity"""
@@ -147,11 +147,11 @@ def accidentDurationHourHeatmap(state='All',county="All", percentile = 10):
             WHERE state='{state}')
             SELECT Counts, Hour, AverageDuration, A2.DurPercentile
             FROM
-            (SELECT Count(*) as Counts, Hour, DurPercentile /*Format in correct form for Python heatmap*/
+            (SELECT Count(*) as Counts, Hour, DurPercentile /*A1 aggregates counts by hour and percentile */
             FROM
             (SELECT EXTRACT(HOUR FROM StartDate) as Hour, A2.DurPercentile 
             FROM
-            (SELECT AID,StartDate,Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile /*Gets all information and combines it with DurPercentile*/
+            (SELECT AID,StartDate,Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile /*Gets all accidents with their start times and duration percentiles */
             FROM  Durations
             ) A2)
             GROUP BY Hour, DurPercentile) A1
@@ -168,9 +168,9 @@ def accidentDurationHourHeatmap(state='All',county="All", percentile = 10):
             FROM
             (SELECT EXTRACT(HOUR FROM StartDate) as Hour, A2.DurPercentile 
             FROM
-            (SELECT AID,StartDate,Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile /*inside query gets all information except average */
+            (SELECT AID,StartDate,Duration, NTILE({percentile}) OVER (ORDER BY Duration) AS DurPercentile /*Gets Start date to extract hour and percentile */
             FROM  Durations                                                                               /*Issue with duplicate averages on multiple rows, must group by percentile */
-            ) A2)
+            ) A2) 
             GROUP BY Hour, DurPercentile) A1
             JOIN (SELECT AVG(Duration) as AverageDuration, DurPercentile   /*Gets average duration of each DurPercentile*/
             FROM
