@@ -72,3 +72,18 @@ def app():
                         hover_data=["STATE", "DAMAGE"],
                         labels={'COUNT':'Accident Count', 'COUNTY': 'County', "STATE" : "State"})
     st.write(fig)
+
+    severity = st.radio("Select Accident Severity", (1, 2, 3, 4))
+    stCountyAcdnt = q.stormCountyAccident(minutes = hours * 60, severity = severity)
+    stCountyAcdnt_df = callSql(stCountyAcdnt).copy()
+    fig = px.choropleth_mapbox(stCountyAcdnt_df, geojson=counties, locations='FIPS', color='COUNT',
+                                color_continuous_scale="Cividis",
+                                mapbox_style="carto-positron",
+                                range_color=(0,1600),
+                                zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
+                                opacity=0.5,
+                                hover_name="COUNTY",
+                                hover_data=["SEVERITY", "COUNT"],
+                                labels={'COUNT':'Number of Accidents', 'COUNTY': 'County', 'STATE': 'State'})
+    fig.update_layout(title="<b>Severity of Accidents During Storms</b>")
+    st.plotly_chart(fig)
