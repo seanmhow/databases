@@ -61,20 +61,38 @@ def app():
 
     counties = s.getLocationData()
 
-    severity = st.radio("Select Accident Severity", (1, 2, 3, 4))
-    stCountyAcdnt = q.stormCountyAccident(minutes = hours * 60, severity = severity)
-    stCountyAcdnt_df = callSql(stCountyAcdnt).copy()
-    fig = px.choropleth_mapbox(stCountyAcdnt_df, geojson=counties, locations='FIPS', color='COUNT',
-                                color_continuous_scale="Cividis",
-                                mapbox_style="carto-positron",
-                                range_color=(0,1600),
-                                zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
-                                opacity=0.5,
-                                hover_name="COUNTY",
-                                hover_data=["SEVERITY", "COUNT"],
-                                labels={'COUNT':'Number of Accidents', 'COUNTY': 'County', 'STATE': 'State'})
-    fig.update_layout(title="<b>Severity of Accidents During Storms</b>")
-    st.plotly_chart(fig)
+    severity = st.radio("Select Accident Severity", ('1', '2', '3', '4', 'All'))
+    if severity == 'All':
+    
+        stCountyAcdnt = q.stormCountyAccidentAll(minutes = hours * 60)
+        stCountyAcdnt_df = callSql(stCountyAcdnt).copy()
+        fig = px.choropleth_mapbox(stCountyAcdnt_df, geojson=counties, locations='FIPS', color='COUNT',
+                                    color_continuous_scale="Cividis",
+                                    mapbox_style="carto-positron",
+                                    range_color=(0,stCountyAcdnt_df["COUNT"].max()),
+                                    zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
+                                    opacity=0.5,
+                                    hover_name="COUNTY",
+                                    hover_data=["COUNT"],
+                                    labels={'COUNT':'Number of Accidents', 'COUNTY': 'County', 'STATE': 'State'})
+        fig.update_layout(title="<b>Severity of Accidents During Storms</b>")
+        st.plotly_chart(fig)
+    
+    else:
+        stCountyAcdnt = q.stormCountyAccident(minutes = hours * 60, severity = severity)
+        stCountyAcdnt_df = callSql(stCountyAcdnt).copy()
+        fig = px.choropleth_mapbox(stCountyAcdnt_df, geojson=counties, locations='FIPS', color='COUNT',
+                                    color_continuous_scale="Cividis",
+                                    mapbox_style="carto-positron",
+                                    range_color=(0,stCountyAcdnt_df["COUNT"].max()),
+                                    zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
+                                    opacity=0.5,
+                                    hover_name="COUNTY",
+                                    hover_data=["SEVERITY", "COUNT"],
+                                    labels={'COUNT':'Number of Accidents', 'COUNTY': 'County', 'STATE': 'State'})
+        fig.update_layout(title="<b>Severity of Accidents During Storms</b>")
+        st.plotly_chart(fig)
+    
 
 
     percentile = st.select_slider(label=f"Display counties in top X% of counties by Accident Count", options=list(np.arange(0, 100)), key=10)
