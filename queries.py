@@ -16,6 +16,7 @@ def severityToStorm(minutes='60',state='All'):
     OR (A.enddate > S.begindate AND A.enddate < S.begindate + interval '{minutes}' minute))
     GROUP BY stormtype"""
 
+#Duration of Accidents During Storm types
 def accidentDurationToStorm(minutes='60',state='All'):
  #User selects storm duration, accident duration grouped by storm
  #Display as bar plot
@@ -34,6 +35,7 @@ def accidentDurationToStorm(minutes='60',state='All'):
                 OR (A.enddate > S.begindate AND A.enddate < S.begindate + interval '{minutes}' minute))
                 GROUP BY stormtype"""
 
+#Average duration of accidents during storms
 def stormAccidentDurationVsAverage(minutes='60', stormtype='All'):
     #returns 2 values, one is accidents during stormtype, other is average accidents. Can do barplot (or other option if you think of something better)
     if stormtype != 'All':
@@ -56,7 +58,7 @@ def stormAccidentDurationVsAverage(minutes='60', stormtype='All'):
         (SELECT AVG(24 *60* extract(day FROM ENDDATE - STARTDATE) + 60*extract(hour from ENDDATE - STARTDATE) + extract(minute from ENDDATE - STARTDATE)) as Duration
         FROM JPalavec.Accident)"""
 
-
+#Number of Accidents by Month and Hour
 def hourMonthHeatmap(state='All',county='All'):
     #Heatmap, user can optionall select County and State with default value of All
     if state != 'All':
@@ -84,7 +86,7 @@ def hourMonthHeatmap(state='All',county='All'):
                 FROM JPalavec.Accident
                 )
                 GROUP BY Hour, Month"""
-
+#Number of Accidents by Population Density and Hour
 def hourAverageDensityHeatmap(state="All",percentile=10):
     if state != 'All':
         f"""SELECT Count(*) as Counts, Hour, AverageDensity
@@ -119,7 +121,7 @@ def hourAverageDensityHeatmap(state="All",percentile=10):
             JPalavec.Accident A
             WHERE C1.poptile = C2.Poptile AND A.county = C2.county AND A.state = C2.state)
             GROUP BY Hour, AverageDensity"""
-
+#Number of Accidents by Hour and Duration
 def accidentDurationHourHeatmap(state='All',county="All", percentile = 10):
     if (state != 'All'):
         if (county != 'All'):
@@ -180,7 +182,6 @@ def accidentDurationHourHeatmap(state='All',county="All", percentile = 10):
 
 def accidentsPopDensityGraph(state='All'):
     #Returns accidentCount, and PopDensity, could add County,state as labels. Graph as scatterplot
-    print(state)
     if state != 'All':
         return f"""SELECT AccidentCount, C.state, C.county, C.Pop2018 / C.LandArea as PopDensity
             FROM(
@@ -202,7 +203,7 @@ def accidentsPopDensityGraph(state='All'):
             JPalavec.County C
             WHERE C.state = AC.state AND C.county = AC.county AND C.county != 'All'
             ORDER BY AccidentCount desc"""
-
+#Most Expensive
 def worstCountiesToLive(accidentPercentile='80'):
     return f"""SELECT fips, NVL(X.Damage,0) as DAMAGE, X.County, X.State /*Replace null values with 0 */
             FROM(
@@ -221,7 +222,7 @@ def worstCountiesToLive(accidentPercentile='80'):
             JOIN JPalavec.county C ON X.county = C.county AND X.state = C.state
             ORDER BY X.Damage desc"""
 
-
+#OVERVIEW MAP
 def accidentsFips():
     #Map all accidents in US by county
     return """
@@ -235,7 +236,8 @@ def accidentsFips():
             JPalavec.county c2
             WHERE c1.fips = c2.fips
         """
-
+#Average Accident Duration by State
+#Average Accident Impact on Traffic
 def accidentDurationState():
     #Map accident durations by state across US
     return """
@@ -251,6 +253,7 @@ def accidentDurationState():
         WHERE c1.state = c2.state
     """
 
+#Average Accident Severity by State
 def accidentSeverityState():
     #Map accident durations by state across US
     return """
@@ -265,7 +268,7 @@ def accidentSeverityState():
         WHERE c1.state = c2.state
     """
 
-
+#Number of Accidents by Day of Week and Hour
 def hourWeekdayAccident():
     return """
         SELECT Count(*) as COUNTS, Hour, Day, indexDay
@@ -277,7 +280,7 @@ def hourWeekdayAccident():
         GROUP BY Hour, Day, indexDay
         ORDER BY indexDay asc
     """
-
+#Number of Accidents by Day of Week and Hour
 def stormAccidentsVsExpectedAccidents(minutes = 60):
     return f"""
     SELECT SUM(ADS) as AccidentsDuringStorms, Sum(ExpectedAccidents) as ExpectedAccidents
@@ -299,6 +302,7 @@ def stormAccidentsVsExpectedAccidents(minutes = 60):
     ) ADS
     WHERE ADS.county = SC.county AND ADS.state = SC.state AND ADS.state = AC.state AND ADS.county = AC.county)
     """
+
 
 def stormCountyAccident(minutes = 60, severity = 1):
     return f"""

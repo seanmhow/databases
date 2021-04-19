@@ -130,10 +130,9 @@ def app():
 
 
        percentile = st.select_slider(label="Number of Percentile Groups", options=list(np.arange(0, 21)),value=10, key=20)
-       popDenHr = q.hourAverageDensityHeatmap(state, percentile=percentile)
        durHr = q.accidentDurationHourHeatmap(state,county=county,percentile = percentile)
        durHr_df = callSql(durHr).copy()
-       pdh_df = callSql(popDenHr).copy()
+
        #print(len(durHr_df['AVERAGEDURATION'].unique()))
        #Hour and Duration
        fig4 = plt.figure()
@@ -151,7 +150,8 @@ def app():
        plt.title("Number of Accidents by Hour and Duration")
        st.pyplot(fig4)
 
-
+       popDenHr = q.hourAverageDensityHeatmap(state, percentile=percentile)
+       pdh_df = callSql(popDenHr).copy()
        # Population Density by Hour
 
        st.text('''
