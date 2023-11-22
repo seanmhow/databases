@@ -95,7 +95,7 @@ def app():
     
 
 
-    percentile = st.select_slider(label=f"Display counties in top X% of counties by Accident Count", options=list(np.arange(0, 100)), key=10)
+    percentile = st.select_slider(label="Display counties in top X% of counties by Accident Count", options=list(np.arange(0, 100)), key=10)
     wc = q.worstCountiesToLive(accidentPercentile=percentile)
     wc_df = callSql(wc).copy()
     fig = px.choropleth_mapbox(wc_df, geojson=counties, locations='FIPS', color='DAMAGE', title="Most Expensive Counties",

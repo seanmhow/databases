@@ -79,7 +79,7 @@ def hourMonthHeatmap(state='All',county='All'):
                 WHERE state = '{state}'
                 )
                 GROUP BY Hour, Month"""
-    return f"""SELECT Count(*) as Counts, Hour, Month
+    return """SELECT Count(*) as Counts, Hour, Month
                 FROM
                 (
                 SELECT EXTRACT(HOUR FROM StartDate) as Hour,EXTRACT(MONTH FROM StartDate) as Month
@@ -193,7 +193,7 @@ def accidentsPopDensityGraph(state='All'):
             JPalavec.County C
             WHERE C.state = AC.state AND C.county = AC.county AND C.county != 'All' AND AC.state = '{state}'
             ORDER BY AccidentCount desc"""
-    return f"""SELECT AccidentCount, C.state, C.county, C.Pop2018 / C.LandArea as PopDensity         /*Join and get population densities*/
+    return """SELECT AccidentCount, C.state, C.county, C.Pop2018 / C.LandArea as PopDensity         /*Join and get population densities*/
             FROM(
             SELECT Count(*) as AccidentCount, C.county, C.state             /*Get all accident counts of every county */
             FROM JPalavec.Accident A
